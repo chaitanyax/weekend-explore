@@ -73,6 +73,31 @@ app.post('/api/auth/google', async (req, res) => {
   }
 });
 
+app.post('/api/auth/guest', (req, res) => {
+  const demoUser = {
+    id: 'demo-user-123',
+    name: 'Demo Explorer',
+    email: 'demo@weekendexplore.com',
+    avatarUrl: 'https://i.pravatar.cc/150?u=demo'
+  };
+
+  // Ensure demo user exists in DB so foreign keys don't fail
+  const exists = db.prepare('SELECT id FROM users WHERE id = ?').get(demoUser.id);
+  if (!exists) {
+    db.prepare('INSERT INTO users (id, name, email, avatarUrl) VALUES (?, ?, ?, ?)').run(
+      demoUser.id, demoUser.name, demoUser.email, demoUser.avatarUrl
+    );
+  }
+
+  const token = jwt.sign({
+    id: demoUser.id,
+    email: demoUser.email,
+    name: demoUser.name,
+    avatarUrl: demoUser.avatarUrl
+  }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, user: demoUser });
+});
+
 app.get('/api/trips', (req, res) => {
   const q = (req.query.q || '').toString().toLowerCase();
   let stmt;

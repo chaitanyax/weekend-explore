@@ -53,16 +53,12 @@ export default function SignIn() {
   const handleDemoLogin = async () => {
     setIsDemoLoading(true);
     try {
-      const demoUser = {
-        id: 'demo-user-123',
-        name: 'Demo Explorer',
-        email: 'demo@weekendexplore.com',
-        avatarUrl: 'https://i.pravatar.cc/150?u=demo'
-      };
-      const dummyToken = 'demo-token-' + Date.now();
-      handleLoginSuccess({ user: demoUser, token: dummyToken });
+      const res = await fetch('/api/auth/guest', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      handleLoginSuccess(data);
     } catch (e) {
-      alert('Demo login failed');
+      alert('Demo login failed: ' + (e as Error).message);
     } finally {
       setIsDemoLoading(false);
     }

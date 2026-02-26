@@ -17,24 +17,19 @@ export default function App() {
   useEffect(() => {
     const token = localStorage.getItem('me_jwt');
     if (token) {
-      if (token.startsWith('demo-token-')) {
-        // Handle demo token
-        dispatch(setUser({
-          id: 'demo-user-123',
-          name: 'Demo Explorer',
-          email: 'demo@weekendexplore.com',
-          avatarUrl: 'https://i.pravatar.cc/150?u=demo',
-          token
-        }));
-      } else {
-        try {
-          const [, payload] = token.split('.');
-          const data = JSON.parse(atob(payload));
-          if (data && data.email) {
-            dispatch(setUser({ id: data.id, name: data.name, email: data.email, token }));
-          }
-        } catch { }
-      }
+      try {
+        const [, payload] = token.split('.');
+        const data = JSON.parse(atob(payload));
+        if (data && data.email) {
+          dispatch(setUser({
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            avatarUrl: data.avatarUrl || `https://i.pravatar.cc/150?u=${data.email}`,
+            token
+          }));
+        }
+      } catch { }
     }
   }, [dispatch]);
 

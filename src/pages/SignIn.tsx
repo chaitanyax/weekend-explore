@@ -1,47 +1,16 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAppDispatch } from '@/hooks';
 import { setUser } from '@/features/auth/authSlice';
-
-const GoogleLoginButton = ({ onLoading, onSuccess }: { onLoading: (v: boolean) => void, onSuccess: (data: any) => void }) => {
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const res = await fetch('/api/auth/google', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: tokenResponse.access_token }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || 'Auth failed');
-        onSuccess(data);
-      } catch (e) {
-        alert((e as Error).message);
-      }
-    },
-    onError: () => alert('Google sign-in failed'),
-    flow: 'implicit',
-    scope: 'profile email openid',
-  });
-
-  return (
-    <button
-      onClick={() => login()}
-      className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl px-4 py-3 hover:bg-slate-50 transition-colors shadow-sm"
-    >
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5" />
-      Continue with Google
-    </button>
-  );
-};
 
 export default function SignIn() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const dispatch = useAppDispatch();
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLoginSuccess = (data: any) => {
     localStorage.setItem('me_jwt', data.token);
@@ -50,17 +19,23 @@ export default function SignIn() {
     navigate(to, { replace: true });
   };
 
-  const handleDemoLogin = async () => {
-    setIsDemoLoading(true);
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
     try {
-      const res = await fetch('/api/auth/guest', { method: 'POST' });
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || 'Login failed');
       handleLoginSuccess(data);
-    } catch (e) {
-      alert('Demo login failed: ' + (e as Error).message);
+    } catch (err: any) {
+      setError(err.message);
     } finally {
-      setIsDemoLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -76,40 +51,53 @@ export default function SignIn() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-slate-900">Welcome Back</h1>
-          <p className="text-slate-500 mt-2">Join the community of weekend explorers.</p>
+          <p className="text-slate-500 mt-2">Sign in to your account</p>
         </div>
 
-        <div className="space-y-4">
-          {clientId && (
-            <GoogleLoginButton onLoading={setIsDemoLoading} onSuccess={handleLoginSuccess} />
-          )}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 animate-shake">
+            {error}
+          </div>
+        )}
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-100"></div>
+        <form onSubmit={onSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+            <input
+              type="email"
+              required
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <div className="flex justify-between mb-2">
+              <label className="block text-sm font-bold text-slate-700">Password</label>
+              <Link to="/forgot-password" title="Recover account" className="text-xs text-indigo-600 hover:underline">Forgot password?</Link>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-slate-400">{clientId ? 'or try it out' : 'sign in as guest'}</span>
-            </div>
+            <input
+              type="password"
+              required
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
 
           <button
-            onClick={handleDemoLogin}
-            disabled={isDemoLoading}
-            className="w-full bg-slate-900 text-white font-bold rounded-xl px-4 py-3 hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98] disabled:opacity-50"
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-slate-900 text-white font-bold rounded-xl px-4 py-3 hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 mt-4"
           >
-            {isDemoLoading ? 'Loading...' : 'Continue as Guest'}
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
-        </div>
+        </form>
 
-        <p className="text-xs text-center text-slate-400 mt-8 leading-relaxed">
-          By signing in, you agree to our <span className="underline cursor-pointer">Terms of Service</span> and <span className="underline cursor-pointer">Privacy Policy</span>.
-        </p>
-      </div>
-
-      <div className="mt-8 text-center">
-        <p className="text-sm text-slate-500">
-          New here? <span className="text-indigo-600 font-bold hover:underline cursor-pointer" onClick={() => navigate('/')}>Discover more events</span>
+        <p className="text-sm text-center text-slate-500 mt-8">
+          Don't have an account? <Link to="/register" className="text-indigo-600 font-bold hover:underline">Register here</Link>
         </p>
       </div>
     </div>

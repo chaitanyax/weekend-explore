@@ -60,12 +60,20 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            <NavLink
-              to="/signin"
-              className="px-6 py-2.5 rounded-xl grad-primary text-white text-sm font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all active:scale-95"
-            >
-              Sign in
-            </NavLink>
+            <div className="flex items-center gap-3">
+              <NavLink
+                to="/signin"
+                className="text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors px-3 py-2"
+              >
+                Sign In
+              </NavLink>
+              <NavLink
+                to="/register"
+                className="px-5 py-2 rounded-xl grad-primary text-white text-sm font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all active:scale-95"
+              >
+                Join Now
+              </NavLink>
+            </div>
           )}
         </div>
       </nav>

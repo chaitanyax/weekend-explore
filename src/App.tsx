@@ -1,15 +1,28 @@
-import React, { Suspense, lazy, useEffect } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import React, { Suspense, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import ProtectedRoute from './routes/ProtectedRoute';
-import { useAppDispatch } from './hooks';
+import { useAppDispatch, useAppSelector } from './hooks';
 import { setUser } from './features/auth/authSlice';
 
-const Discover = lazy(() => import('./pages/Discover'));
-const TripDetail = lazy(() => import('./pages/TripDetail'));
-const CreateTrip = lazy(() => import('./pages/CreateTrip'));
-const Profile = lazy(() => import('./pages/Profile'));
-const SignIn = lazy(() => import('./pages/SignIn'));
+// Dynamic imports for pages
+const Discover = React.lazy(() => import('./pages/Discover'));
+const TripDetail = React.lazy(() => import('./pages/TripDetail'));
+const CreateTrip = React.lazy(() => import('./pages/CreateTrip'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const SignIn = React.lazy(() => import('./pages/SignIn'));
+const Register = React.lazy(() => import('./pages/Register'));
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+
+function RequireAuth({ children }: { children: JSX.Element }) {
+  const { user } = useAppSelector((s) => s.auth);
+  const location = useLocation();
+
+  if (!user) {
+    return <Navigate to="/signin" state={{ from: location }} replace />;
+  }
+
+  return children;
+}
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -44,42 +57,33 @@ export default function App() {
         }>
           <Routes>
             <Route path="/" element={<Discover />} />
-            <Route path="/signin" element={<SignIn />} />
+            <Route path="/trips/:id" element={<TripDetail />} />
             <Route
               path="/trips/new"
               element={
-                <ProtectedRoute>
+                <RequireAuth>
                   <CreateTrip />
-                </ProtectedRoute>
+                </RequireAuth>
               }
             />
-            <Route path="/trips/:id" element={<TripDetail />} />
             <Route
               path="/profile"
               element={
-                <ProtectedRoute>
+                <RequireAuth>
                   <Profile />
-                </ProtectedRoute>
+                </RequireAuth>
               }
             />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </main>
-      <footer className="border-t border-slate-100 bg-white py-12">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 grad-primary rounded-md" />
-            <span className="font-bold text-slate-900">Weekend Explore</span>
-          </div>
-          <p className="text-slate-400 text-sm">
-            © {new Date().getFullYear()} Made with ❤️ for weekend adventurers.
-          </p>
-          <div className="flex gap-6">
-            <span className="text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors text-sm font-medium">Privacy</span>
-            <span className="text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors text-sm font-medium">Terms</span>
-            <span className="text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors text-sm font-medium">Contact</span>
-          </div>
+      <footer className="py-10 border-t border-slate-100 bg-white">
+        <div className="max-w-7xl mx-auto px-6 text-center text-slate-400 text-sm">
+          © 2026 Weekend Explore. Built for the community.
         </div>
       </footer>
     </div>

@@ -13,6 +13,8 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 seed();
 
+import bcrypt from 'bcrypt';
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -41,61 +43,52 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
 
-app.post('/api/auth/google', async (req, res) => {
-  const { access_token } = req.body || {};
-  if (!access_token) return res.status(400).json({ error: 'Missing access_token' });
+app.post('/api/auth/register', async (req, res) => {
+  const { name, email, password } = req.body || {};
+  if (!name || !email || !password) return res.status(400).json({ error: 'Missing fields' });
+
   try {
-    const ures = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-    if (!ures.ok) {
-      const txt = await ures.text();
-      return res.status(401).json({ error: 'Invalid Google token', detail: txt });
-    }
-    const profile = await ures.json();
-    const email = profile.email;
-    const name = profile.name || profile.given_name || 'Traveler';
-    const avatarUrl = profile.picture;
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    if (existing) return res.status(400).json({ error: 'User already exists' });
 
-    let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-    if (!user) {
-      user = { id: randomUUID(), name, email, avatarUrl };
-      db.prepare('INSERT INTO users (id, name, email, avatarUrl) VALUES (?, ?, ?, ?)').run(user.id, user.name, user.email, user.avatarUrl);
-    } else {
-      user = { ...user, name, avatarUrl };
-      db.prepare('UPDATE users SET name = ?, avatarUrl = ? WHERE email = ?').run(name, avatarUrl, email);
-    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userId = randomUUID();
+    const avatarUrl = `https://i.pravatar.cc/150?u=${email}`;
 
-    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user });
+    db.prepare('INSERT INTO users (id, name, email, password, avatarUrl) VALUES (?, ?, ?, ?, ?)').run(
+      userId, name, email, hashedPassword, avatarUrl
+    );
+
+    const token = jwt.sign({ id: userId, email, name, avatarUrl }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user: { id: userId, name, email, avatarUrl } });
   } catch (e) {
-    res.status(500).json({ error: 'Auth error', detail: String(e) });
+    res.status(500).json({ error: 'Registration failed', detail: String(e) });
   }
 });
 
-app.post('/api/auth/guest', (req, res) => {
-  const demoUser = {
-    id: 'demo-user-123',
-    name: 'Demo Explorer',
-    email: 'demo@weekendexplore.com',
-    avatarUrl: 'https://i.pravatar.cc/150?u=demo'
-  };
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
 
-  // Ensure demo user exists in DB so foreign keys don't fail
-  const exists = db.prepare('SELECT id FROM users WHERE id = ?').get(demoUser.id);
-  if (!exists) {
-    db.prepare('INSERT INTO users (id, name, email, avatarUrl) VALUES (?, ?, ?, ?)').run(
-      demoUser.id, demoUser.name, demoUser.email, demoUser.avatarUrl
-    );
+  try {
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    if (!user || !user.password) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } });
+  } catch (e) {
+    res.status(500).json({ error: 'Login failed', detail: String(e) });
   }
+});
 
-  const token = jwt.sign({
-    id: demoUser.id,
-    email: demoUser.email,
-    name: demoUser.name,
-    avatarUrl: demoUser.avatarUrl
-  }, JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user: demoUser });
+app.post('/api/auth/forgot-password', (req, res) => {
+  // Placeholder for real email reset logic
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  res.json({ message: 'If this email exists, a reset link has been sent (mock).' });
 });
 
 app.get('/api/trips', (req, res) => {

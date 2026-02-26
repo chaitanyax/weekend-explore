@@ -7,19 +7,19 @@ A premium, high-performance web application designed to help people discover and
 
 ## 🚀 Key Features
 
-- **🏠 Modern Discovery**: Browse through a curated collection of **100+ seeded events** with beautiful imagery and real-time search.
+- **🏠 Modern Discovery**: Browse through community-hosted events with high-quality imagery and real-time search.
 - **✨ Premium UI/UX**: Professional design system using **Outfit** typography, **Glassmorphism**, and smooth transitions.
-- **🔐 Guest Access**: Seamless "Continue as Guest" mode to explore the platform instantly without configuration.
+- **🔐 Secure Auth**: custom-built registration and login system with **bcrypt** password hashing and **JWT** sessions.
 - **📍 Map Integration**: Real-time Google Maps integration for trip locations and meeting points.
 - **🛠️ Persistent Storage**: Full **SQLite** implementation for local data persistence (trips, users, attendees).
-- **👤 User Profiles**: Manage your hosted trips and upcoming weekend adventures.
+- **👤 User Profiles**: Manage your personal profile, hosted trips, and upcoming weekend adventures.
 - **📱 Mobile-First Design**: Optimized for everything from small smartphones to large desktop displays.
 
 ## 🛠️ Technology Stack
 
 - **Frontend**: React 18, Redux Toolkit, RTK Query, Tailwind CSS, React Router v6.
-- **Backend**: Node.js, Express, **better-sqlite3**.
-- **Auth**: Google OAuth 2.0 + JWT (with fallback Demo/Guest mode).
+- **Backend**: Node.js, Express, **better-sqlite3**, **bcrypt** for security.
+- **Auth**: Custom Email/Password + JWT.
 - **Maps**: @react-google-maps/api.
 
 ## 🏁 Getting Started

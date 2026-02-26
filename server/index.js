@@ -1,0 +1,172 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
+import db, { seed } from './db.js';
+
+dotenv.config();
+seed();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const PORT = process.env.PORT || 4000;
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
+
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return res.status(401).json({ error: 'Missing Authorization' });
+  const token = authHeader.replace('Bearer ', '');
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, time: new Date().toISOString() });
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  const { access_token } = req.body || {};
+  if (!access_token) return res.status(400).json({ error: 'Missing access_token' });
+  try {
+    const ures = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    if (!ures.ok) {
+      const txt = await ures.text();
+      return res.status(401).json({ error: 'Invalid Google token', detail: txt });
+    }
+    const profile = await ures.json();
+    const email = profile.email;
+    const name = profile.name || profile.given_name || 'Traveler';
+    const avatarUrl = profile.picture;
+
+    let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    if (!user) {
+      user = { id: randomUUID(), name, email, avatarUrl };
+      db.prepare('INSERT INTO users (id, name, email, avatarUrl) VALUES (?, ?, ?, ?)').run(user.id, user.name, user.email, user.avatarUrl);
+    } else {
+      user = { ...user, name, avatarUrl };
+      db.prepare('UPDATE users SET name = ?, avatarUrl = ? WHERE email = ?').run(name, avatarUrl, email);
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user });
+  } catch (e) {
+    res.status(500).json({ error: 'Auth error', detail: String(e) });
+  }
+});
+
+app.get('/api/trips', (req, res) => {
+  const q = (req.query.q || '').toString().toLowerCase();
+  let stmt;
+  let params = [];
+
+  if (q) {
+    stmt = db.prepare(`
+      SELECT t.*,
+        (SELECT json_group_array(json_object('id', u.id, 'name', u.name, 'email', u.email))
+         FROM trip_attendees ta
+         JOIN users u ON ta.userId = u.id
+         WHERE ta.tripId = t.id) as attendees
+      FROM trips t
+      WHERE lower(t.title) LIKE ?
+         OR lower(t.locationName) LIKE ?
+         OR lower(t.tags) LIKE ?
+    `);
+    const likeQ = `%${q}%`;
+    params = [likeQ, likeQ, likeQ];
+  } else {
+    stmt = db.prepare(`
+      SELECT t.*,
+        (SELECT json_group_array(json_object('id', u.id, 'name', u.name, 'email', u.email))
+         FROM trip_attendees ta
+         JOIN users u ON ta.userId = u.id
+         WHERE ta.tripId = t.id) as attendees
+      FROM trips t
+      ORDER BY t.startDate ASC
+    `);
+  }
+
+  const rows = stmt.all(...params);
+  const formatted = rows.map(r => ({
+    ...r,
+    tags: JSON.parse(r.tags || '[]'),
+    attendees: JSON.parse(r.attendees || '[]')
+  }));
+
+  res.json(formatted);
+});
+
+app.get('/api/trips/:id', (req, res) => {
+  const trip = db.prepare(`
+    SELECT t.*,
+      (SELECT json_group_array(json_object('id', u.id, 'name', u.name, 'email', u.email))
+       FROM trip_attendees ta
+       JOIN users u ON ta.userId = u.id
+       WHERE ta.tripId = t.id) as attendees
+    FROM trips t
+    WHERE t.id = ?
+  `).get(req.params.id);
+
+  if (!trip) return res.status(404).json({ error: 'Not found' });
+
+  res.json({
+    ...trip,
+    tags: JSON.parse(trip.tags || '[]'),
+    attendees: JSON.parse(trip.attendees || '[]')
+  });
+});
+
+app.post('/api/trips', authMiddleware, (req, res) => {
+  const body = req.body || {};
+  const required = ['title', 'locationName', 'lat', 'lng', 'startDate', 'endDate'];
+  for (const k of required) {
+    if (body[k] === undefined || body[k] === null || body[k] === '') {
+      return res.status(400).json({ error: `Missing field ${k}` });
+    }
+  }
+  const id = randomUUID();
+  const organizerId = req.user.id;
+  const tags = JSON.stringify(Array.isArray(body.tags) ? body.tags : []);
+
+  db.prepare(`
+    INSERT INTO trips (id, title, description, imageUrl, locationName, lat, lng, startDate, endDate, budget, tags, capacity, organizerId)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    id, body.title, body.description || '', body.imageUrl || null, body.locationName,
+    Number(body.lat), Number(body.lng), body.startDate, body.endDate,
+    body.budget ? Number(body.budget) : null, tags,
+    body.capacity ? Number(body.capacity) : null, organizerId
+  );
+
+  db.prepare('INSERT INTO trip_attendees (tripId, userId) VALUES (?, ?)').run(id, organizerId);
+
+  res.status(201).json({ id, ...body, organizerId });
+});
+
+app.post('/api/trips/:id/join', authMiddleware, (req, res) => {
+  const tripId = req.params.id;
+  const userId = req.user.id;
+
+  const trip = db.prepare('SELECT id FROM trips WHERE id = ?').get(tripId);
+  if (!trip) return res.status(404).json({ error: 'Not found' });
+
+  const exists = db.prepare('SELECT 1 FROM trip_attendees WHERE tripId = ? AND userId = ?').get(tripId, userId);
+  if (!exists) {
+    db.prepare('INSERT INTO trip_attendees (tripId, userId) VALUES (?, ?)').run(tripId, userId);
+  }
+
+  res.json({ success: true });
+});
+
+app.listen(PORT, () => {
+  console.log(`API running on http://localhost:${PORT}`);
+});

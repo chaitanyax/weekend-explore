@@ -1,5 +1,7 @@
 # 🗺️ Weekend Explore
 
+[![Live Demo](https://img.shields.io/badge/Live-Demo-indigo?style=for-the-badge&logo=render)](https://weekend-explore.onrender.com/)
+
 A premium, high-performance web application designed to help people discover and host local weekend getaways and social adventures. Built with **React 18**, **Vite**, **TypeScript**, and a persistent **SQLite** backend.
 
 ![Weekend Explore Banner](https://images.unsplash.com/photo-1506012733851-bb9795794e75?auto=format&fit=crop&q=80&w=1200)

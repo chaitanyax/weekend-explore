@@ -3,7 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'node:crypto';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import db, { seed } from './db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 seed();
@@ -11,6 +16,10 @@ seed();
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the 'dist' directory if it exists
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
 
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
@@ -167,6 +176,17 @@ app.post('/api/trips/:id/join', authMiddleware, (req, res) => {
   res.json({ success: true });
 });
 
-app.listen(PORT, () => {
-  console.log(`API running on http://localhost:${PORT}`);
+// Handle SPA routing - send all non-API requests to index.html
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../dist/index.html'), (err) => {
+      if (err) {
+        res.status(404).json({ error: 'Not found and client-side build missing' });
+      }
+    });
+  }
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`API running on port ${PORT}`);
 });

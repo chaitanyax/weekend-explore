@@ -27,35 +27,35 @@ export default function TripDetail() {
   const dateStr = `${new Date(data.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })} - ${new Date(data.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`;
 
   return (
-    <section className="max-w-6xl mx-auto py-8 px-4 animate-fade-in space-y-10">
+    <section className="max-w-6xl mx-auto py-4 sm:py-8 px-4 animate-fade-in space-y-10">
       {/* Hero Header */}
-      <div className="relative rounded-3xl overflow-hidden h-[400px] shadow-2xl">
+      <div className="relative rounded-3xl overflow-hidden h-[300px] sm:h-[400px] shadow-2xl">
         <img
           src={data.imageUrl || 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=1200'}
           alt={data.title}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
-        <div className="absolute bottom-10 left-10 right-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="absolute bottom-6 left-6 right-6 sm:bottom-10 sm:left-10 sm:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div className="space-y-4 max-w-2xl">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {data.tags?.map(t => (
-                <span key={t} className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/30 uppercase tracking-widest">
+                <span key={t} className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] sm:text-xs font-bold border border-white/30 uppercase tracking-widest">
                   #{t}
                 </span>
               ))}
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white leading-tight shadow-sm">{data.title}</h1>
-            <div className="flex items-center gap-4 text-white/90">
-              <span className="flex items-center gap-1.5 font-medium">
-                <svg className="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white leading-tight shadow-sm">{data.title}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-white/90">
+              <span className="flex items-center gap-1.5 text-xs sm:text-base font-medium">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 </svg>
                 {data.locationName}
               </span>
-              <span className="opacity-40">•</span>
-              <span className="flex items-center gap-1.5 font-medium">
-                <svg className="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span className="hidden sm:inline opacity-40">•</span>
+              <span className="flex items-center gap-1.5 text-xs sm:text-base font-medium">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 {dateStr}

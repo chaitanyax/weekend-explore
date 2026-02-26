@@ -69,8 +69,8 @@ export default function SignIn() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-12 animate-fade-in">
-      <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 relative overflow-hidden">
+    <div className="max-w-md mx-auto mt-8 sm:mt-12 px-4 animate-fade-in">
+      <div className="bg-white p-6 sm:p-8 rounded-[24px] sm:rounded-3xl shadow-xl border border-slate-100 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-violet-500" />
 
         <div className="text-center mb-8">

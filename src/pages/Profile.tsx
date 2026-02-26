@@ -24,9 +24,9 @@ export default function Profile() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6 space-y-10 animate-fade-in">
+    <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 sm:px-6 space-y-10 animate-fade-in">
       {/* Profile Header */}
-      <div className="relative glass rounded-[32px] p-8 md:p-12 overflow-hidden border border-slate-200 shadow-xl shadow-indigo-500/5">
+      <div className="relative glass rounded-[24px] sm:rounded-[32px] p-6 sm:p-8 md:p-12 overflow-hidden border border-slate-200 shadow-xl shadow-indigo-500/5">
         <div className="absolute top-0 right-0 w-64 h-64 grad-primary opacity-[0.03] rounded-full -mr-32 -mt-32 blur-3xl" />
         <div className="relative flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
           <div className="relative group">

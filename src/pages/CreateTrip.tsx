@@ -67,13 +67,13 @@ export default function CreateTrip() {
   });
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6">
+    <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 sm:px-6">
       <div className="mb-10 text-center space-y-2">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Host an <span className="text-grad">Adventure</span></h1>
-        <p className="text-slate-500 max-w-lg mx-auto">Fill in the details below to create a new weekend experience and build your community.</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Host an <span className="text-grad">Adventure</span></h1>
+        <p className="text-slate-500 max-w-lg mx-auto text-sm sm:text-base">Fill in the details below to create a new weekend experience and build your community.</p>
       </div>
 
-      <div className="glass rounded-3xl p-8 shadow-2xl shadow-indigo-500/10 border border-slate-200">
+      <div className="glass rounded-[24px] sm:rounded-3xl p-5 sm:p-8 shadow-2xl shadow-indigo-500/10 border border-slate-200">
         <form onSubmit={onSubmit} className="space-y-8">
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-slate-900 border-b border-slate-100 pb-2">Basic Information</h2>

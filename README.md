@@ -4,7 +4,6 @@
 
 A premium, high-performance web application designed to help people discover and host local weekend getaways and social adventures. Built with **React 18**, **Vite**, **TypeScript**, and a persistent **SQLite** backend.
 
-![Weekend Explore Banner](https://images.unsplash.com/photo-1506012733851-bb9795794e75?auto=format&fit=crop&q=80&w=1200)
 
 ## 🚀 Key Features
 
@@ -14,6 +13,7 @@ A premium, high-performance web application designed to help people discover and
 - **📍 Map Integration**: Real-time Google Maps integration for trip locations and meeting points.
 - **🛠️ Persistent Storage**: Full **SQLite** implementation for local data persistence (trips, users, attendees).
 - **👤 User Profiles**: Manage your hosted trips and upcoming weekend adventures.
+- **📱 Mobile-First Design**: Optimized for everything from small smartphones to large desktop displays.
 
 ## 🛠️ Technology Stack
 

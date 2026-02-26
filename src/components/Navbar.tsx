@@ -15,8 +15,8 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-slate-200">
-      <nav className="max-w-7xl mx-auto h-[var(--navbar-height)] flex items-center justify-between px-6">
-        <div className="flex items-center gap-10">
+      <nav className="max-w-7xl mx-auto h-[var(--navbar-height)] flex items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-4 sm:gap-10">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-9 h-9 grad-primary rounded-xl flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -24,7 +24,7 @@ export default function Navbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900">
+            <span className="font-bold text-lg sm:text-xl tracking-tight text-slate-900">
               Weekend <span className="text-indigo-600">Explore</span>
             </span>
           </Link>
@@ -39,22 +39,22 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           {user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <NavLink to="/profile" className="flex items-center gap-2 group">
                 <img
                   src={user.avatarUrl || `https://i.pravatar.cc/100?u=${user.email}`}
                   alt={user.name}
                   className="w-8 h-8 rounded-full border-2 border-slate-100 group-hover:border-indigo-500 transition-colors"
                 />
-                <span className="text-sm font-bold text-slate-700 hidden sm:block">
+                <span className="text-sm font-bold text-slate-700 hidden lg:block">
                   {user.name?.split(' ')[0] || 'Profile'}
                 </span>
               </NavLink>
               <button
                 onClick={onLogout}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] sm:text-xs font-bold transition-all whitespace-nowrap"
               >
                 Sign out
               </button>

@@ -73,9 +73,9 @@ export default function Discover() {
   const { data, isLoading } = useListTripsQuery(query ? { q: query } : undefined);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 py-8 px-8 md:px-12 lg:px-16">
+    <div className="max-w-7xl mx-auto space-y-10 py-6 sm:py-8 px-4 sm:px-6 md:px-12 lg:px-16">
       <div className="text-center space-y-4">
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900">
           Find your next <span className="text-indigo-600">adventure</span>
         </h1>
         <p className="text-slate-500 max-w-2xl mx-auto text-lg">
@@ -84,12 +84,12 @@ export default function Discover() {
 
         <div className="max-w-xl mx-auto relative group mt-8">
           <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-1000"></div>
-          <div className="relative flex items-center bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden px-4 py-1">
-            <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="relative flex items-center bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden px-2 sm:px-4 py-1">
+            <svg className="h-5 w-5 text-slate-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
-              className="w-full px-4 py-3 focus:outline-none text-slate-900 placeholder:text-slate-400"
+              className="w-full px-2 sm:px-4 py-3 focus:outline-none text-sm sm:text-base text-slate-900 placeholder:text-slate-400"
               placeholder="Search by place, activity, or tag..."
               value={query}
               onChange={(e) => startTransition(() => setQuery(e.target.value))}

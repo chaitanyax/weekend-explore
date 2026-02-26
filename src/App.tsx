@@ -41,7 +41,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F9FAFB]">
       <Navbar />
-      <main className="flex-1 container-page px-8 md:px-12 lg:px-16">
+      <main className="flex-1 container-page px-4 sm:px-6 md:px-12 lg:px-16">
         <Suspense fallback={
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />

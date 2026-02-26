@@ -44,7 +44,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.post('/api/auth/register', async (req, res) => {
-  const { name, email, password } = req.body || {};
+  const { name, email, password, avatarUrl, age, gender, hobbies } = req.body || {};
   if (!name || !email || !password) return res.status(400).json({ error: 'Missing fields' });
 
   try {
@@ -53,14 +53,16 @@ app.post('/api/auth/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userId = randomUUID();
-    const avatarUrl = `https://i.pravatar.cc/150?u=${email}`;
+    const finalAvatarUrl = avatarUrl || `https://i.pravatar.cc/150?u=${email}`;
+    const hobbiesData = JSON.stringify(Array.isArray(hobbies) ? hobbies : []);
 
-    db.prepare('INSERT INTO users (id, name, email, password, avatarUrl) VALUES (?, ?, ?, ?, ?)').run(
-      userId, name, email, hashedPassword, avatarUrl
+    db.prepare('INSERT INTO users (id, name, email, password, avatarUrl, age, gender, hobbies) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
+      userId, name, email, hashedPassword, finalAvatarUrl, age || null, gender || null, hobbiesData
     );
 
-    const token = jwt.sign({ id: userId, email, name, avatarUrl }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ token, user: { id: userId, name, email, avatarUrl } });
+    const userObj = { id: userId, name, email, avatarUrl: finalAvatarUrl, age, gender, hobbies: Array.isArray(hobbies) ? hobbies : [] };
+    const token = jwt.sign(userObj, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user: userObj });
   } catch (e) {
     res.status(500).json({ error: 'Registration failed', detail: String(e) });
   }
@@ -77,8 +79,10 @@ app.post('/api/auth/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } });
+    const hobbies = JSON.parse(user.hobbies || '[]');
+    const userObj = { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl, age: user.age, gender: user.gender, hobbies };
+    const token = jwt.sign(userObj, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: userObj });
   } catch (e) {
     res.status(500).json({ error: 'Login failed', detail: String(e) });
   }
@@ -99,7 +103,7 @@ app.get('/api/trips', (req, res) => {
   if (q) {
     stmt = db.prepare(`
       SELECT t.*,
-        (SELECT json_group_array(json_object('id', u.id, 'name', u.name, 'email', u.email))
+        (SELECT json_group_array(json_object('id', u.id, 'name', u.name, 'email', u.email, 'avatarUrl', u.avatarUrl))
          FROM trip_attendees ta
          JOIN users u ON ta.userId = u.id
          WHERE ta.tripId = t.id) as attendees
@@ -113,7 +117,7 @@ app.get('/api/trips', (req, res) => {
   } else {
     stmt = db.prepare(`
       SELECT t.*,
-        (SELECT json_group_array(json_object('id', u.id, 'name', u.name, 'email', u.email))
+        (SELECT json_group_array(json_object('id', u.id, 'name', u.name, 'email', u.email, 'avatarUrl', u.avatarUrl))
          FROM trip_attendees ta
          JOIN users u ON ta.userId = u.id
          WHERE ta.tripId = t.id) as attendees
@@ -135,7 +139,7 @@ app.get('/api/trips', (req, res) => {
 app.get('/api/trips/:id', (req, res) => {
   const trip = db.prepare(`
     SELECT t.*,
-      (SELECT json_group_array(json_object('id', u.id, 'name', u.name, 'email', u.email))
+      (SELECT json_group_array(json_object('id', u.id, 'name', u.name, 'email', u.email, 'avatarUrl', u.avatarUrl))
        FROM trip_attendees ta
        JOIN users u ON ta.userId = u.id
        WHERE ta.tripId = t.id) as attendees
@@ -177,6 +181,45 @@ app.post('/api/trips', authMiddleware, (req, res) => {
   db.prepare('INSERT INTO trip_attendees (tripId, userId) VALUES (?, ?)').run(id, organizerId);
 
   res.status(201).json({ id, ...body, organizerId });
+});
+
+app.put('/api/trips/:id', authMiddleware, (req, res) => {
+  const body = req.body || {};
+  const tripId = req.params.id;
+  const userId = req.user.id;
+
+  const trip = db.prepare('SELECT organizerId FROM trips WHERE id = ?').get(tripId);
+  if (!trip) return res.status(404).json({ error: 'Not found' });
+  if (trip.organizerId !== userId) return res.status(403).json({ error: 'Unauthorized to edit this trip' });
+
+  const tags = JSON.stringify(Array.isArray(body.tags) ? body.tags : []);
+
+  db.prepare(`
+    UPDATE trips SET 
+      title = ?, description = ?, imageUrl = ?, locationName = ?, 
+      lat = ?, lng = ?, startDate = ?, endDate = ?, 
+      budget = ?, tags = ?, capacity = ?
+    WHERE id = ?
+  `).run(
+    body.title, body.description || '', body.imageUrl || null, body.locationName,
+    Number(body.lat), Number(body.lng), body.startDate, body.endDate,
+    body.budget ? Number(body.budget) : null, tags,
+    body.capacity ? Number(body.capacity) : null, tripId
+  );
+
+  res.json({ id: tripId, ...body });
+});
+
+app.delete('/api/trips/:id', authMiddleware, (req, res) => {
+  const tripId = req.params.id;
+  const userId = req.user.id;
+
+  const trip = db.prepare('SELECT organizerId FROM trips WHERE id = ?').get(tripId);
+  if (!trip) return res.status(404).json({ error: 'Not found' });
+  if (trip.organizerId !== userId) return res.status(403).json({ error: 'Unauthorized to delete this trip' });
+
+  db.prepare('DELETE FROM trips WHERE id = ?').run(tripId);
+  res.json({ success: true });
 });
 
 app.post('/api/trips/:id/join', authMiddleware, (req, res) => {

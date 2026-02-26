@@ -17,7 +17,10 @@ db.exec(`
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT,
-    avatarUrl TEXT
+    avatarUrl TEXT,
+    age INTEGER,
+    gender TEXT,
+    hobbies TEXT -- JSON string
   );
 
   CREATE TABLE IF NOT EXISTS trips (
@@ -48,42 +51,7 @@ db.exec(`
 
 // Seeding function
 export function seed() {
-  const count = db.prepare('SELECT COUNT(*) as count FROM trips').get().count;
-  if (count > 0) return;
-
-  console.log('Seeding initial sample event...');
-
-  const sampleOrganizerId = randomUUID();
-  db.prepare('INSERT INTO users (id, name, email, avatarUrl) VALUES (?, ?, ?, ?)').run(
-    sampleOrganizerId, 'Founder', 'admin@weekendexplore.com', 'https://i.pravatar.cc/150?u=admin'
-  );
-
-  const tripId = randomUUID();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() + 7);
-  const endDate = new Date(startDate);
-  endDate.setHours(endDate.getHours() + 4);
-
-  db.prepare(`
-    INSERT INTO trips (id, title, description, imageUrl, locationName, lat, lng, startDate, endDate, budget, tags, capacity, organizerId)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    tripId,
-    'Grand Inaugural Trek: Nandi Hills',
-    'Join the Weekend Explore community for our first official community trek! Perfect for networking and enjoying a crisp sunrise.',
-    'https://images.unsplash.com/photo-1551632432-c73581c61966?auto=format&fit=crop&q=80&w=800',
-    'Nandi Hills',
-    13.3702, 77.6835,
-    startDate.toISOString(),
-    endDate.toISOString(),
-    0,
-    JSON.stringify(['nature', 'community']),
-    50,
-    sampleOrganizerId
-  );
-
-  db.prepare('INSERT INTO trip_attendees (tripId, userId) VALUES (?, ?)').run(tripId, sampleOrganizerId);
-
-  console.log('Seeding complete.');
+  // Empty seed to allow real-time community usage from scratch
+  console.log('Database initialized. Ready for community hosting.');
 }
 export default db;

@@ -11,9 +11,9 @@ export const tripsApi = baseApi.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: 'Trip' as const, id })),
-              { type: 'Trip' as const, id: 'LIST' },
-            ]
+            ...result.map(({ id }) => ({ type: 'Trip' as const, id })),
+            { type: 'Trip' as const, id: 'LIST' },
+          ]
           : [{ type: 'Trip' as const, id: 'LIST' }],
     }),
     getTrip: build.query<Trip, string>({
@@ -27,6 +27,27 @@ export const tripsApi = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: [{ type: 'Trip', id: 'LIST' }],
+    }),
+    updateTrip: build.mutation<Trip, { id: string } & Partial<CreateTripInput>>({
+      query: ({ id, ...body }) => ({
+        url: `/trips/${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_res, _e, { id }) => [
+        { type: 'Trip', id },
+        { type: 'Trip', id: 'LIST' },
+      ],
+    }),
+    deleteTrip: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({
+        url: `/trips/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_res, _e, id) => [
+        { type: 'Trip', id },
+        { type: 'Trip', id: 'LIST' },
+      ],
     }),
     joinTrip: build.mutation<Trip, { id: string }>({
       query: ({ id }) => ({ url: `/trips/${id}/join`, method: 'POST' }),
@@ -42,5 +63,7 @@ export const {
   useListTripsQuery,
   useGetTripQuery,
   useCreateTripMutation,
+  useUpdateTripMutation,
+  useDeleteTripMutation,
   useJoinTripMutation,
 } = tripsApi;

@@ -12,6 +12,7 @@ const Profile = React.lazy(() => import('./pages/Profile'));
 const SignIn = React.lazy(() => import('./pages/SignIn'));
 const Register = React.lazy(() => import('./pages/Register'));
 const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+const EditTrip = React.lazy(() => import('./pages/EditTrip'));
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user } = useAppSelector((s) => s.auth);
@@ -71,6 +72,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <Profile />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/trips/edit/:id"
+              element={
+                <RequireAuth>
+                  <EditTrip />
                 </RequireAuth>
               }
             />

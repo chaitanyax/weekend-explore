@@ -1,14 +1,16 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useGetTripQuery, useJoinTripMutation } from '@/features/trips/tripsApi';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useGetTripQuery, useJoinTripMutation, useDeleteTripMutation } from '@/features/trips/tripsApi';
 import GoogleMap from '@/components/GoogleMap';
 import { useAppSelector } from '@/hooks';
 
 export default function TripDetail() {
   const { id = '' } = useParams();
+  const navigate = useNavigate();
   const { data, isLoading, isError } = useGetTripQuery(id);
   const { user } = useAppSelector((s) => s.auth);
   const [joinTrip, { isLoading: joining }] = useJoinTripMutation();
+  const [deleteTrip] = useDeleteTripMutation();
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -82,6 +84,31 @@ export default function TripDetail() {
                 You're In! 🎉
               </div>
             )}
+            {user?.id === data.organizerId && (
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <Link
+                  to={`/trips/edit/${data.id}`}
+                  className="flex-1 px-8 py-3 rounded-2xl bg-white text-slate-900 border border-slate-200 font-black shadow-lg hover:bg-slate-50 transition-all text-center"
+                >
+                  Edit
+                </Link>
+                <button
+                  onClick={async () => {
+                    if (confirm('Are you sure you want to delete this adventure?')) {
+                      try {
+                        await deleteTrip(data.id).unwrap();
+                        navigate('/');
+                      } catch (e) {
+                        alert('Failed to delete trip');
+                      }
+                    }
+                  }}
+                  className="flex-1 px-8 py-3 rounded-2xl bg-red-600 text-white font-black shadow-xl shadow-red-200 hover:bg-red-700 transition-all text-center"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
             {!user && (
               <Link to="/signin" className="px-8 py-3 rounded-2xl bg-white text-indigo-600 font-black hover:scale-[1.02] transition-all">
                 Sign in to Join
@@ -118,7 +145,7 @@ export default function TripDetail() {
             <div className="space-y-3">
               {data.attendees.map((a) => (
                 <div key={a.id} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-colors group">
-                  <img src={`https://i.pravatar.cc/100?u=${a.email}`} className="w-10 h-10 rounded-full ring-2 ring-transparent group-hover:ring-indigo-100 transition-all" alt={a.name} />
+                  <img src={a.avatarUrl || `https://i.pravatar.cc/100?u=${a.email}`} className="w-10 h-10 rounded-full ring-2 ring-transparent group-hover:ring-indigo-100 transition-all" alt={a.name} />
                   <div>
                     <div className="font-bold text-slate-800 text-sm">{a.name}</div>
                     <div className="text-xs text-slate-400">{a.email}</div>

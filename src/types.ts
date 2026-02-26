@@ -5,6 +5,9 @@ export interface UserProfile {
   name: string;
   email: string;
   avatarUrl?: string;
+  age?: number;
+  gender?: string;
+  hobbies?: string[];
   city?: string;
   interests?: string[];
 }
